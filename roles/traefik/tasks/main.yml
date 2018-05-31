@@ -1,0 +1,37 @@
+- name: Create traefik config directory
+  file: path=docker/traefik state=directory
+  
+- name: Create traefik acme directory
+  file: path=docker/traefik/acme state=directory
+
+- name: Create traefik config file
+  template:
+    src: traefik.toml.j2
+    dest: docker/traefik/traefik.toml
+    mode: 0600
+
+- name: Create traefik environment file
+  template:
+    src: environment.j2
+    dest: docker/traefik/environment
+    mode: 0600
+    
+- name: Create traefik systemd container service
+  include_role:
+    name: mhutter.docker-systemd-service
+  vars:
+    name: traefik
+    image: traefik:latest
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "{{ ansible_env.HOME }}/docker/traefik/traefik.toml:/etc/traefik/traefik.toml"
+      - "{{ ansible_env.HOME }}/docker/traefik/acme:/etc/traefik/acme"
+    labels:
+      - "traefik.backend=proxy"
+      - "traefik.frontend.rule=Host:{{ inventory_hostname }}"
+    args: >-
+      --env-file {{ ansible_env.HOME }}/traefik/environment

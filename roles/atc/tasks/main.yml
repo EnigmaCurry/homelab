@@ -1,0 +1,9 @@
+- name: Create atc systemd container service
+  include_role:
+    name: mhutter.docker-systemd-service
+  vars:
+    name: atc
+    image: enigmacurry/atc:latest
+    labels:
+      - "traefik.backend=website"
+      - "traefik.frontend.rule=Host:atc.{{ app_domain }}"

@@ -1,0 +1,6 @@
+---
+app_domain: "app.example.com"
+traefik_host: "docker.app.example.com"
+acme_domains: "*.app.example.com"
+acme_email: "letsencrypt@example.com"
+digital_ocean_auth: "xxxxxxxxxxxxxxxxxxxxxx"

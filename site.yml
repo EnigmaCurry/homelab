@@ -1,0 +1,10 @@
+- name: Traefik container
+  hosts: traefik
+  roles:
+    - traefik
+
+- name: Hosted docker containers
+  hosts: traefik
+  roles:
+    - dnsmasq
+    - atc

@@ -1,0 +1,6 @@
+# Ansible galaxy requirements:
+# Install: ansible-galaxy install -r requirements.yml
+
+# Run docker containers as systemd services -
+# https://github.com/mhutter/ansible-docker-systemd-service
+- role: mhutter.docker-systemd-service

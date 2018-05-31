@@ -1,0 +1,36 @@
+logLevel = "INFO"
+defaultEntryPoints = ["http", "https"]
+
+[web]
+address = ":8080"
+
+[entryPoints]
+
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+    
+  [entryPoints.https]
+  address = ":443"
+
+  [entryPoints.https.tls]
+
+[docker]
+domain = "{{ traefik_host }}"
+watch = true
+
+
+[acme]
+email = "{{ acme_email }}"
+storage = "/etc/traefik/acme/acme.json"
+entryPoint = "https"
+acmeLogging = true
+onDemand = false
+  [acme.dnsChallenge]
+  provider = "digitalocean"
+  delayBeforeCheck = 0
+
+[[acme.domains]]
+  main = "{{ acme_domains }}"
+  
