@@ -1,0 +1,55 @@
+#cloud-config
+
+## Fedora Atomic kickstart for homelab
+## Installs ansible and other deps
+## Downloads homelab code to /root/homelab
+## Config files are created in /etc/homelab
+
+## Don't put secrets in cloud-config
+## See the bottom of the file for next steps
+
+write_files:
+  - path: "/etc/homelab/hosts"
+    permissions: "0600"
+    owner: "root"
+    content: |
+      [traefik]
+      docker.app.example.com
+  - path: "/etc/homelab/group_vars/traefik.yml"
+    permissions: "0600"
+    owner: "root"
+    content: |
+      ---
+      app_domain: "app.example.com"
+      traefik_host: "docker.app.example.com"
+      acme_domains: "*.app.example.com"
+      acme_email: "letsencrypt@example.com"
+      digital_ocean_auth: "put-digital-ocean-api-key-here"
+      
+runcmd:
+  # Install initial dependencies:
+  - atomic host install emacs-nox git ansible
+  # Update to the latest os-tree snapshot, without rebooting:
+  - rpm-ostree ex livefs
+  # Create SSH key for root user (will be used for ansible)
+  - ssh-keygen -f /root/.ssh/id_rsa -N ''
+  - cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+  # Homelab:
+  - git clone https://github.com/EnigmaCurry/homelab.git /root/homelab
+  - ln -s /etc/homelab/hosts /root/homelab/hosts
+  - ln -s /etc/homelab/group_vars/traefik.yml /root/homelab/group_vars/
+  - ansible-galaxy install -r /root/homelab/requirements.yml
+  # Reboot using the new os-tree:
+  - systemctl reboot
+
+## Once the system reboots, manual steps are :
+##
+## Edit /etc/homelab/group_vars/traefik.yml:
+##  - Fill in your Digital Ocean API key for ACME DNS challenge
+##
+## Edit /etc/homelab/hosts:
+##  - Fill in the hostnames for each service role
+##
+## Run the playbook to create and start the container services:
+##  - ansible-playbook -i /root/homelab/hosts /root/homelab/site.yml
+
