@@ -21,17 +21,17 @@
     name: mhutter.docker-systemd-service
   vars:
     name: traefik
-    image: traefik:latest
-    ports:
+    container_image: traefik:latest
+    container_ports:
       - "80:80"
       - "443:443"
       - "127.0.0.1:8080:8080"
-    volumes:
+    container_volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "{{ ansible_env.HOME }}/docker/traefik/traefik.toml:/etc/traefik/traefik.toml"
       - "{{ ansible_env.HOME }}/docker/traefik/acme:/etc/traefik/acme"
-    labels:
+    container_labels:
       - "traefik.backend=proxy"
       - "traefik.frontend.rule=Host:{{ inventory_hostname }}"
-    args: >-
-      --env-file {{ ansible_env.HOME }}/traefik/environment
+    container_args: >-
+      --env-file {{ ansible_env.HOME }}/docker/traefik/environment

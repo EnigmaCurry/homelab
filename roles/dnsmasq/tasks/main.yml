@@ -3,12 +3,12 @@
     name: mhutter.docker-systemd-service
   vars:
     name: dnsmasq
-    image: andyshinn/dnsmasq:2.78
-    ports:
+    container_image: andyshinn/dnsmasq:2.78
+    container_ports:
       - "53:53/tcp"
       - "53:53/udp"
-    args: >-
+    container_args: >-
       --cap-add=NET_ADMIN
-    cmd: >-
+    container_cmd: >-
       -A /{{ app_domain }}/{{ ansible_default_ipv4.address }}
 
