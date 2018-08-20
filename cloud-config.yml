@@ -5,8 +5,10 @@
 ## Downloads homelab code to /root/homelab
 ## Config files are created in /etc/homelab
 
-## Don't put secrets in cloud-config
-## See the bottom of the file for next steps
+## Don't put secrets in cloud-config.
+## Don't change the default values in cloud-config.
+## Basically, don't edit this file.
+## See the bottom of the file for next steps.
 
 write_files:
   - path: "/etc/homelab/hosts"
@@ -51,5 +53,5 @@ runcmd:
 ##  - Fill in the hostnames for each service role
 ##
 ## Run the playbook to create and start the container services:
-##  - ansible-playbook -i /root/homelab/hosts /root/homelab/site.yml
+##  - ansible-playbook -i /etc/homelab/hosts /root/homelab/site.yml
 
