@@ -6,5 +6,13 @@
 - name: Hosted docker containers
   hosts: traefik
   roles:
-    - jupyter-notebook
-    - atc
+    - role: atc
+
+    # Run several jupyter notbook servers, each with a different name:
+    - role: jupyter_notebook
+    - role: jupyter_notebook
+      id: jupyter2
+    - role: jupyter_notebook
+      id: jupyter3
+
+    

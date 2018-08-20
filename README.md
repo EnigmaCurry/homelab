@@ -349,11 +349,15 @@ Follow the directions below according to your environment.
 
 ## Services implemented
 
- * dnsmasq - LAN local DNS service. Configured to provide wildcard DNS
-   for a whole domain as well as general DNS forwarding to an upstream
-   DNS server (whichever one is already configured on the docker
-   host, probably your router.)
  * traefik - Reverse SSL HTTP proxy with Lets Encrypt Certificate. All
    the containers that provide an HTTP interface, are proxied through
    traefik and thereby gain automatic SSL support.
 
+ * dnsmasq - LAN local DNS service. Configured to provide wildcard DNS
+   for a whole domain as well as general DNS forwarding to an upstream
+   DNS server (whichever one is already configured on the docker
+   host, probably your router.)
+
+ * jupyter-notebook - A single user IPython Notebook server. The
+   'work' directory is saved to a docker volume called
+   jupyter_notebooks.
