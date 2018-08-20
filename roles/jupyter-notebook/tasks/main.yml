@@ -1,0 +1,13 @@
+- name: Create volume for jupyter-notebooks
+  command: docker volume create jupyter_notebooks
+
+- name: Create jupyter-notebook systemd service
+  include_role:
+    name: mhutter.docker-systemd-service
+  vars:
+    name: jupyter
+    container_image: jupyter/scipy-notebook
+    container_volumes:
+      - "jupyter_notebooks:/home/jovyan/work"
+    container_labels:
+      - "traefik.frontend.rule=Host:jupyter.{{ app_domain }}"

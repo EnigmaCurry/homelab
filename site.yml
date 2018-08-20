@@ -6,5 +6,5 @@
 - name: Hosted docker containers
   hosts: traefik
   roles:
-    - dnsmasq
+    - jupyter-notebook
     - atc
