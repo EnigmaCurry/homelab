@@ -2,4 +2,3 @@
   hosts: traefik
   roles:
     - traefik
-
