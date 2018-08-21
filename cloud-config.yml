@@ -1,7 +1,7 @@
 #cloud-config
 
 ## Fedora Atomic kickstart for homelab
-## Installs ansible and other deps
+## Upgrades Docker, installs ansible, and other deps
 ## Downloads homelab code to /root/homelab
 ## Config files are created in /etc/homelab
 
@@ -11,6 +11,11 @@
 ## See the bottom of the file for next steps.
 
 write_files:
+  - path: "/etc/docker/daemon.json"
+    content: |
+      {
+        "storage-driver": "overlay2"
+      }
   - path: "/etc/homelab/hosts"
     permissions: "0600"
     owner: "root"
@@ -29,10 +34,13 @@ write_files:
       digital_ocean_auth: "put-digital-ocean-api-key-here"
       
 runcmd:
+  # Upgrade Docker
+  - curl -o /etc/yum.repos.d/docker-ce.repo https://download.docker.com/linux/fedora/docker-ce.repo
+  - rpm-ostree override remove docker docker-common cockpit-docker
   # Install initial dependencies:
-  - atomic host install emacs-nox git ansible makepasswd
+  - atomic host install docker-ce emacs-nox git ansible makepasswd
   # Update to the latest os-tree snapshot, without rebooting:
-  - rpm-ostree ex livefs
+  - rpm-ostree ex livefs --replace
   # Create SSH key for root user (will be used for ansible)
   - ssh-keygen -f /root/.ssh/id_rsa -N ''
   - cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys

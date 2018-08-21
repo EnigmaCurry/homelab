@@ -1,0 +1,5 @@
+- name: Enable Docker Service
+  hosts: traefik
+  roles:
+    - docker
+    
