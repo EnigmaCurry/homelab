@@ -1,18 +1,6 @@
-- name: Traefik container
-  hosts: traefik
-  roles:
-    - traefik
+- name: Traefik
+  import_playbook: traefik.yml
 
-- name: Hosted docker containers
-  hosts: traefik
-  roles:
-    - role: atc
-
-    # Run several jupyter notbook servers, each with a different name:
-    - role: jupyter_notebook
-    - role: jupyter_notebook
-      id: jupyter2
-    - role: jupyter_notebook
-      id: jupyter3
-
-    
+- name: Keycloak
+  import_playbook: auth.yml
+  

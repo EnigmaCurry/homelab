@@ -1,5 +1,5 @@
 *~
 group_vars/
-site.retry
+*.retry
 \.env
 /hosts

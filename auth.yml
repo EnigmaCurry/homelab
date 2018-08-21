@@ -1,0 +1,4 @@
+- name: Keycloak
+  hosts: keycloak
+  roles:
+    - keycloak

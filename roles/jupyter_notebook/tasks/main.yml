@@ -1,5 +1,6 @@
 - name: Create volume for jupyter-notebooks
-  command: "docker volume create jupyter_notebooks_{{ id | default('jupyter') }}"
+  docker_volume:
+    name: "jupyter_notebooks_{{ id | default('jupyter') }}"
 
 - name: Create jupyter-notebook systemd service
   include_role:

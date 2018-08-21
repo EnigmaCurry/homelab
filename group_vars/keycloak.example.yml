@@ -1,0 +1,10 @@
+---
+# Generate secure passphrases:
+# makepasswd -e sha256 -i 4096 -l 40 | head -c 40 && echo
+
+keycloak_admin_user: admin
+keycloak_admin_password: "make-a-secure-password"
+keycloak_db_name: keycloak
+keycloak_db_user: keycloak
+keycloak_db_password: "make-a-secure-password-here-too"
+keycloak_db_volume: keycloak_postgres

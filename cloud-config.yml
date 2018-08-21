@@ -30,7 +30,7 @@ write_files:
       
 runcmd:
   # Install initial dependencies:
-  - atomic host install emacs-nox git ansible
+  - atomic host install emacs-nox git ansible makepasswd
   # Update to the latest os-tree snapshot, without rebooting:
   - rpm-ostree ex livefs
   # Create SSH key for root user (will be used for ansible)
