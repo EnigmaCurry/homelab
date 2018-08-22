@@ -1,0 +1,5 @@
+- name: System Admin Containers
+  hosts: admin
+  roles:
+     - jupyter_admin
+     

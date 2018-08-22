@@ -6,4 +6,7 @@
 
 - name: Keycloak
   import_playbook: playbooks/auth.yml
-  
+
+- name: Admin
+  import_playbook: playbooks/admin.yml
+

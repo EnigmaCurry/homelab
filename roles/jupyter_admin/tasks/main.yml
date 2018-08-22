@@ -1,0 +1,16 @@
+- name: Create volume for jupyter-admin
+  docker_volume:
+    name: "jupyter_admin"
+
+- name: Create admin systemd service
+  include_role:
+    name: mhutter.docker-systemd-service
+  vars:
+    name: "jupyter_admin"
+    container_image: jupyter/scipy-notebook
+    container_volumes:
+      - "jupyter_admin:/home/jovyan/work"
+      - "/root/homelab:/home/jovyan/homelab"
+    container_labels:
+      - "traefik.frontend.rule=Host:admin.{{ app_domain }}"
+    container_cmd: "start.sh jupyter lab"
