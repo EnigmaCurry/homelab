@@ -42,12 +42,14 @@ fi
 
 # Configure homelab
 mkdir -p $HOMELAB_CONF/{group_vars,ssh}
-chmod 770 $HOMELAB_CONF
+chmod 771 $HOMELAB_CONF
 
 ## Create ssh key for ansible to access host
 ssh-keygen -N '' -f $HOMELAB_CONF/ssh/id_rsa
 ssh-keyscan -H $TRAEFIK_HOST > $HOMELAB_CONF/ssh/known_hosts
 cat $HOMELAB_CONF/ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+cp -a $HOMELAB_CONF/ssh $HOMELAB_CONF/ssh_user
+chown -R $HOMELAB_USER:$HOMELAB_USER $HOMELAB_CONF/ssh_user
 
 ## hosts inventory
 cat <<EOF > $HOMELAB_CONF/hosts
