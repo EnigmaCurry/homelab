@@ -1,0 +1,15 @@
+[Unit]
+After=docker.service
+PartOf=docker.service
+Requires=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f TEMPLATE
+ExecStart=/usr/bin/docker run --name TEMPLATE --rm -v /var/lib/TEMPLATE:/home/jovyan/work TEMPLATE
+ExecStop=/usr/bin/docker stop TEMPLATE
+
+SyslogIdentifier=TEMPLATE
+Restart=always
+
+[Install]
+WantedBy=docker.service
