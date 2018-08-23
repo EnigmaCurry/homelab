@@ -42,21 +42,18 @@ fi
 
 # Configure homelab
 mkdir -p $HOMELAB_CONF/{group_vars,ssh}
-chmod 771 $HOMELAB_CONF
 
 ## Create ssh key for ansible to access host
 ssh-keygen -N '' -f $HOMELAB_CONF/ssh/id_rsa
 ssh-keyscan -H $TRAEFIK_HOST > $HOMELAB_CONF/ssh/known_hosts
 cat $HOMELAB_CONF/ssh/id_rsa.pub >> /root/.ssh/authorized_keys
-cp -a $HOMELAB_CONF/ssh $HOMELAB_CONF/ssh_user
-chown -R $HOMELAB_USER:$HOMELAB_USER $HOMELAB_CONF/ssh_user
 
 ## hosts inventory
 cat <<EOF > $HOMELAB_CONF/hosts
 [traefik]
-$TRAEFIK_HOST
+$TRAEFIK_HOST ansible_user=root
 [admin]
-$TRAEFIK_HOST
+$TRAEFIK_HOST ansible_user=root
 EOF
 chmod 750 $HOMELAB_CONF/hosts
 
@@ -79,9 +76,13 @@ ln -s $HOMELAB_CONF/group_vars/traefik.yml $HOMELAB_HOME/group_vars/traefik.yml
 cd $HOMELAB_HOME/atomic/jupyter_ansible
 docker build -t homelab/jupyter_ansible .
 
+chmod 771 $HOMELAB_CONF
+chown -R $HOMELAB_USER:$HOMELAB_USER $HOMELAB_CONF
+
 ## Run the ansible playbook via the docker image
 docker run --rm -v $HOMELAB_CONF:/etc/homelab \
        -v $HOMELAB_HOME:/home/jovyan/homelab \
-       -v $HOMELAB_CONF/ssh:/root/.ssh \
+       -v $HOMELAB_CONF/ssh:/home/jovyan/.ssh \
+       --user 1000 \
        homelab/jupyter_ansible \
        ansible-playbook -i /etc/homelab/hosts /home/jovyan/homelab/site.yml

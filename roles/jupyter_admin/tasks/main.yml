@@ -13,6 +13,6 @@
       - "jupyter_admin:/home/jovyan/work"
       - "{{ homelab_home }}:/home/jovyan/homelab"
       - "{{ homelab_conf }}:/etc/homelab"
-      - "{{ homelab_conf }}/ssh_user:/home/jovyan/.ssh"
+      - "{{ homelab_conf }}/ssh:/home/jovyan/.ssh"
     container_labels:
       - "traefik.frontend.rule=Host:admin.{{ app_domain }}"
