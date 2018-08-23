@@ -4,9 +4,9 @@
 
 - name: Create keycloak database
   include_role:
-    name: mhutter.docker-systemd-service
+    name: docker-systemd-service
   vars:
-    name: keycloak_postgres
+    container_name: keycloak_postgres
     container_image: postgres
     container_env:
       POSTGRES_DB: "{{ keycloak_db_name }}"
@@ -17,9 +17,9 @@
       
 - name: Create keycloak service
   include_role:
-    name: mhutter.docker-systemd-service
+    name: docker-systemd-service
   vars:
-    name: keycloak
+    container_name: keycloak
     container_image: jboss/keycloak
     container_labels:
       - "traefik.backend=auth"

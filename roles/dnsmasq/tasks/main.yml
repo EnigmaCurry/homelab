@@ -1,8 +1,8 @@
 - name: Create dnsmasq systemd container service
   include_role:
-    name: mhutter.docker-systemd-service
+    name: docker-systemd-service
   vars:
-    name: dnsmasq
+    container_name: dnsmasq
     container_image: andyshinn/dnsmasq:2.78
     container_ports:
       - "53:53/tcp"

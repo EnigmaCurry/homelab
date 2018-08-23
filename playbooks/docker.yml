@@ -1,4 +1,0 @@
-- name: Enable Docker Service
-  roles:
-    - docker
-    

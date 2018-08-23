@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+{% macro params(name, vals) %}
+{% for v in vals %}-{{ name }} {{ v }} {% endfor %}
+{% endmacro %}
+[Unit]
+After=docker.service
+PartOf=docker.service
+Requires=docker.service
+
+[Service]
+{% if container_env is defined %}
+EnvironmentFile={{ sysconf_dir }}/{{ container_name }}
+{% endif %}
+ExecStartPre=-/usr/bin/docker rm -f {{ container_name }}
+ExecStart=/usr/bin/docker run --name {{ container_name }} --rm {% if container_env is defined %}--env-file {{ sysconf_dir }}/{{ container_name }} {% endif %}{{ params('v', container_volumes) }}{{ params('p', container_ports) }}{{ params('-link', container_links) }}{{ params('l', container_labels) }}{{ container_args | default('') |trim }} {{ container_image }} {{ container_cmd | default('') | trim }}
+ExecStop=/usr/bin/docker stop {{ container_name }}
+
+SyslogIdentifier={{ container_name }}
+Restart=always
+
+[Install]
+WantedBy=docker.service

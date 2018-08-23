@@ -1,26 +1,27 @@
 - name: Create traefik config directory
-  file: path=/etc/homelab/docker/traefik state=directory
-
-- name: Create traefik acme docker volume
-  command: docker volume create traefik_acme
+  file: path="{{ homelab_conf }}/traefik" state=directory
 
 - name: Create traefik config file
   template:
     src: traefik.toml.j2
-    dest: /etc/homelab/docker/traefik/traefik.toml
+    dest: "{{ homelab_conf }}/traefik/traefik.toml"
     mode: 0600
 
 - name: Create traefik environment file
   template:
     src: environment.j2
-    dest: /etc/homelab/docker/traefik/environment
+    dest: "{{ homelab_conf }}/traefik/environment"
     mode: 0600
-    
+
+- name: Create acme volume
+  docker_volume:
+    name: "traefik_acme"
+
 - name: Create traefik systemd container service
   include_role:
-    name: mhutter.docker-systemd-service
+    name: docker-systemd-service
   vars:
-    name: traefik
+    container_name: traefik
     container_image: traefik:latest
     container_ports:
       - "80:80"
@@ -28,10 +29,10 @@
       - "127.0.0.1:8080:8080"
     container_volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/etc/homelab/docker/traefik/traefik.toml:/etc/traefik/traefik.toml"
+      - "{{ homelab_conf }}/traefik:/etc/traefik"
       - "traefik_acme:/etc/traefik/acme"
     container_labels:
       - "traefik.backend=proxy"
       - "traefik.frontend.rule=Host:{{ inventory_hostname }}"
     container_args: >-
-      --env-file /etc/homelab/docker/traefik/environment
+      --env-file {{ homelab_conf }}/traefik/environment

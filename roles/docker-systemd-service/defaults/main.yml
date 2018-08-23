@@ -1,0 +1,9 @@
+---
+container_docker_pull: yes
+container_labels: []
+container_links: []
+container_ports: []
+container_volumes: []
+service_enabled: yes
+service_masked: no
+service_state: started

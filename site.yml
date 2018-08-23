@@ -1,12 +1,14 @@
-- name: Docker
-  import_playbook: playbooks/docker.yml
-    
 - name: Traefik
   import_playbook: playbooks/traefik.yml
 
-- name: Keycloak
-  import_playbook: playbooks/auth.yml
-
 - name: Admin
   import_playbook: playbooks/admin.yml
+
+- name: atc
+  hosts: traefik
+  roles:
+    - atc
+
+# - name: Keycloak
+#   import_playbook: playbooks/auth.yml
 

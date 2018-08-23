@@ -31,6 +31,13 @@ Follow the directions below according to your environment.
    ansible roles, where each role deploys an app or service with
    a unique FQDN.)
 
+ * Generate a Digital Ocean API key (API tab). Name it the same as the
+   hostname of the droplet you'll create. You'll need to provide the
+   key for the next section. This will be used for the Let's Encrypt
+   DNS challenge response. If you want automatic TLS certificate
+   renewal, this API key needs to remain valid and be secured on this
+   system.
+     
  * Create a new droplet to run docker and traefik:
 
    * Choose Fedora Atomic. (Not regular Fedora. It's on the "Container
@@ -38,15 +45,14 @@ Follow the directions below according to your environment.
    
    * Choose droplet size ($5/1GB works fine for testing)
    
-   * Add your own administrative ssh key (This is 80/20 automation, we
-     do need to login to the terminal later for final setup and
-     maintainence.)
+   * Add your own administrative ssh key to login to the console if
+     necessary.
      
    * Choose whatever hostname you want, front end users won't see this
      name. In this example, choose 'docker', when fully qualified that
      would be *docker.app.example.com*. This will be your droplet host
      to administer.
-     
+
    * Select additional options:
    
      * Choose Private Networking (not strictly necessary, but if you
@@ -54,14 +60,11 @@ Follow the directions below according to your environment.
 
      * Choose User Data. This will provide a kickstart to operating
        system setup for our droplet.
-       
-     * Copy and paste from [cloud-config.yml](cloud-config.yml) into the
-       User Data field. At this point, you shouldn't need to change
-       anything in it, you can leave the example.com domains and
-       placeholder api keys in place, as these instructions will
-       explain the final setup procedures done by hand, on the host
-       terminal (hey, entering secret keys is just easier to do
-       securely if they are done manually. 80/20 automation.)
+
+     * Copy and paste from
+       [atomic/atomic-cloud-config.yml](atomic/atomic-cloud-config.yml)
+       into the User Data field. Edit the Environment variables to
+       suit your environment. Paste in the API key you generated above.
 
    * Click Create! You can watch the log of the kickstart if you open
      the console from the droplet page. The droplet will install
@@ -76,80 +79,17 @@ Follow the directions below according to your environment.
    * app.example.com
    * *.app.example.com
 
- * You should now be able to SSH into the root terminal of
-   app.example.com.
+ * The droplet will reboot once, then you should now be able to SSH
+   into the root terminal of app.example.com.
 
        ssh root@app.example.com
 
- * Generate a Digital Ocean API key (API tab). Name it the same as the
-   hostname of the droplet. You'll need to provide the key for the
-   next section. This will be used for the Let's Encrypt DNS challenge
-   response. If you want automatic TLS certificate renewal, this API
-   key needs to remain valid and be secured on this system.
+ * Post installation tasks are run the first time the machine reboots,
+   check the log:
+ 
+       journalctl -f --unit post-install
 
- * From the console of the new droplet, edit these files, (templates
-   of which came from the cloud-config.yml you pasted before, you're
-   just filling in the bits now. 80/20.):
-
-   * /etc/homelab/hosts - This is the ansible inventory file, it lists
-     the host roles and the servers that will handle those roles. In
-     homelab there is only one host role so far (traefik). The file
-     should list the FQDN of the droplet hostname (resolving to the
-     Floating IP, eg. docker.app.example.com.)
-
-   * /etc/homelab/group_vars/traefik.yml - This is the configuration
-     for the traefik ansible role, **it has some secret information that
-     should be handled securely**. The file has been permissioned to
-     only be readable by root. Edit the following fields:
-
-     * app_domain: the subdomain for all the traefik hosted containers, eg. "app.example.com"
-     * traefik_host: the full domain of the docker host, eg. "docker.app.example.com"
-     * acme_domains: the wildcard domain used for certificates, eg. "*.app.example.com"
-     * acme_email: the email address used for certificates, eg. "letsencrypt@example.com"
-     * digital_ocean_auth: the Digital Ocean API auth token used for Lets Encrypt DNS challenges.
-
- * From a security perspective, you may want to consider that the API
-   Key gives access to your entire Digital Ocean account.
-
-   Keeping copies of the API key on the server is required for
-   automatic Let's Encrypt certificate renewels to work. Every few
-   months, Let's Encrypt requires refreshing DNS challenge response
-   values, which traefik does for you, automatically. It just requires
-   the key, so that it can use the DNS update API. Unfortunately,
-   there is no fine-grained permissioning for API keys. Regardless,
-   it's a secret, and you need to protect it.
-
-   This means that in addition to good system security practices, you
-   may want to limit the kinds of docker containers that you allow to
-   run on this host. Experimental, or less trusted containers (or
-   indeed all other containers) could be run on auxillary droplets
-   that the main droplet running (only) traefik proxies for. Those
-   auxillary containers would then be isolated from the system with
-   access to the key. This is where the Private Networking tick box on
-   droplet creation becomes important. This advanced configuration is
-   left devised to the reader.
-
-   Homelab also stores the ACME (Let's Encrypt) secrets generated by
-   traefik in the traefik_acme docker volume, so I think it makes
-   sense to also host the Digital Ocean API key on the same host. That
-   way, in a multi-droplet scenario, you are only storing secrets on a
-   single machine, with higher security concerns.
-   
- * Now that final configuration files are in place, you can invoke the
-   ansible playbook to finish the docker container service creation:
-
-       ansible-playbook -i /etc/homelab/hosts /root/homelab/site.yml
-
- * Each role listed in site.yml is now created as its own systemd
-   service, and should now be running.
-
- * The admin screen of traefik is only visible to the host itself, on
-   127.0.0.1. To view it remotely you will need to forward the port
-   through SSH when you connect:
-
-       ssh -L 8080:localhost:8080 docker.app.example.com
-
-   The traefik status page should be visible at http://localhost:8080
+   Wait for the message "Post Installation tasks Complete"
 
  * Examine the logs of the traefik container and ensure that the Let's
    Encrypt DNS Challenge completed successfully, or not:
