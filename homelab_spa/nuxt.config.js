@@ -12,7 +12,8 @@ module.exports = {
       { hid: 'description', name: 'description', content: 'Hot tub not included' }
     ],
     link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      { rel: 'stylesheet', href:'https://fonts.googleapis.com/css?family=Source+Code+Pro:300'}
     ]
   },
   css: [
@@ -52,6 +53,12 @@ module.exports = {
   },
   plugins: [
     "~/plugins/vue-awesome"
-  ]
+  ],
+  modules: [
+    '@nuxtjs/markdownit'
+  ],
+  markdownit: {
+    preset: 'default'
+  }
 }
 
