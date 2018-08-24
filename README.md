@@ -125,6 +125,86 @@ Follow the directions below according to your environment.
  * Check the demo app is running, and that SSL is working properly. In
    your browser to go to https://atc.app.example.com
 
+### Private home lab installation
+
+Homelab actually started as something that you would use in your own
+dwelling, the home you live at. I wanted to have the same kind of
+automation I get for cloud services, inside my home on my own private
+network.
+
+Before long, my focus shifted to other things, and I shelved
+homelab. I've come back to it now, but I've been focussing on digital
+ocean and cloud deployment stuff recently. So homelab is not in a
+ready state to be deployed at an actual home right now.
+
+But here's the gist, and if you understand the digital ocean workflow
+above, and how my configuration works, you can easily adapt this for a
+totally private, home LAN type setup.
+
+ - You still need a real internet domain name.
+ - You still need a digital ocean account, but you won't deploy any
+   droplets. You need to manage your DNS for Let's Encrypt challenge
+   response. Digital Ocean is used here only to update the DNS
+   records. If you have another way of doing that, then you don't need
+   Digital Ocean.
+ - You may be wondering.. Yes, you _can_ use Let's Encrypt
+   certificates for private LANs! Now you can protect your internal ip
+   ranges with TLS. When you view your gateway router admin page,
+   you get a valid SSL certificate acceptable in all browsers.
+ - You will use the APP_DOMAIN as your own private LAN subnet,
+   eg. app.lan.example.com. I choose app.lan because I want a whole
+   subdomain for homelab, just as above. _This does not include LAN
+   clients_. Clients need to be on their own subnet. For example,
+   laptop1.lan.example.com is your laptop, atomic.app.lan.example.com
+   is homelab, which serves *.app.lan.example.com.
+ - You will create a docker server, and then install homelab on it,
+   configuring it with the hostname atomic.app.lan.example.com. I
+   haven't done this step yet, since I switched the install to Fedora
+   Atomic. Maybe it just works somehow with Fedora Atomic Workstation,
+   but I just haven't tried it yet.
+ - Anyway, I'll probably want to administer debian instrastructure at
+   home, (Fedora Atomic is still strange to me), so that means that
+   the same installation steps that atomic runs from
+   [atomic/atomic-cloud-config.yml](atomic/atomic-cloud-config.yml)
+   and [atomic/install.sh](atomic/install.sh) need to be translated
+   into apt-get and debianisms. You can probably just grok the
+   commands and configure it by hand. Eventually I'll write a script.
+ - You need to add your domain to Digital Ocean and set it up for DNS,
+   but you don't need to create any records, as you will rely on your
+   own private DNS server (hosted by homelab) for that.
+ - You need to generate an API token for Digital Ocean, the same as
+   above, and make sure it's being sent to the environment of the
+   traefik container (/etc/homelab/traefik/environment), so that it
+   can use it to update DNS when Let's Encrypt ask for it to update the
+   challenge response every 3-10 months.
+ - Note that the docker server running traefik needs an internet
+   connection to talk to Let's Encrypt to keep the TLS certificate
+   active. However, intermittent connection is OK. You just need to be
+   online every 3 months to update the certificate.
+ - You could even deploy homelab to the cloud such to guarantee that
+   it had constant uptime and internet connection, but then just grab
+   the certificate and copy to another homelab instance running on the
+   LAN that doesn't necessarily have internet access at all. Then you
+   have no worries that your certificate will expire, and need no
+   internet access for your LAN.
+ - If you're not well versed in TLS/SSL mechanics, you may be
+   wondering how this works. I _don't_ know how it works, but I _do_
+   understand it: Your OS/browser has a list of valid Certificate
+   Authorities (CA), one of which is Let's Encrypt. It understands how
+   to validate certificates, it does this all on its own,
+   cryptographically. It can validate certificates offline. It needs
+   nothing more than the list of CAs, and to check if the signature of
+   the certificate is from a valid CA.
+ - Ensure your site.yml includes the dnsmasq role, this will provide a
+   DNS server for your private lan. (You configure your DHCP server to
+   send the DNS server ip address of your docker host to your clients.)
+ - The dnsmasq DNS server resolves everything at *.app.lan.example.com to
+   the trafeik container, which proxies for all the other individual
+   containers you run, each getting their own subdomain, eg
+   service1.app.lan.example.com.
+ - Everything going through traefik this way gains SSL support, even
+   running on your private LAN!
+
 ## Administration
 
 To recap, homelab does the following:
