@@ -1,7 +1,7 @@
 # Homelab
 
-Homelab is an Ansible playbook for constructing a private network
-laboratory with automatic SSL support, provided by
+Homelab is an Ansible playbook for a self-hosted network laboratory
+with automatic SSL support, provided by
 [traefik](https://docs.traefik.io/) and [Let's
 Encrypt](https://letsencrypt.org/). Applications are deployed as
 docker containers wrapped as systemd services, provided by
@@ -11,7 +11,9 @@ Homelab is equally suited for firewalled home laboratories, or in the
 cloud for public services. It all depends on where you call home.
 Follow the directions below according to your environment.
 
-## Digital Ocean public cloud deployment
+## Installation
+
+### Digital Ocean public cloud deployment
 
  * Login to your Digital Ocean account, on the Networking tab, add a
    domain name to your account (refered to as *example.com* from here
@@ -122,4 +124,85 @@ Follow the directions below according to your environment.
 
  * Check the demo app is running, and that SSL is working properly. In
    your browser to go to https://atc.app.example.com
+
+## Administration
+
+To recap, homelab does the following:
+
+ - System services are deployed as docker containers. Each container
+   is described in an individual Ansible playbook found in
+   /var/lib/homelab/playbooks. The main playbook is in
+   /var/lib/homelab/site.yml.
+
+ - Container config files are in /etc/homelab
+
+ - Each docker container is wrapped as a systemd service. The name of
+   each systemd service uses the docker container name, and appends
+   '_container' to the end. For instance, the traefik docker container
+   is called 'traefik', therefore the systemd container name is
+   'traefik_container'.
+
+ - Ansible is not installed on the host system. Ansible is run from a
+   docker container that has ssh keys to the host system. The host has
+   access to a wrapper script that will invoke ansible from this
+   container: /var/lib/homelab/atomic/atomic-playbook.sh
+
+## Running a playbook
+
+Once the system is running, ansible can be re-run to deploy any
+changes you've made to containers or homelab code.
+
+To run all the playbooks:
+
+    /var/lib/homelab/atomic/atomic-playbook.sh site.yml
+
+To run a single playbook:
+
+    /var/lib/homelab/atomic/atomic-playbook.sh playbooks/traefik.yml
+
+**Note: The playbook argument to atomic-playbook is a _relative_ path
+ to /var/lib/homelab, mounted inside the container. Don't specify an
+ absolute path for the argument when using the wrapper.**
+
+## Container maintennce
+
+You can check if a container is running using the normal docker functions:
+
+    docker ps -a
+
+However, don't start or stop containers manually, instead use
+systemd. If you try to stop a container with just docker commands, the
+container will be restarted automatically by systemd.
+
+### Stop a container service
+
+    systemctl stop traefik_container
+
+Note: The systemd container is named 'traefik_container', the docker
+container is just called 'traefik'
+
+### Start a container service
+
+    systemctl start traefik_container
+
+### View container status
+
+    systemctl status traefik_container
+
+### Prevent a container from starting on boot:
+
+    systemctl disable traefik_container
+
+### Enable a container to start on boot:
+
+    systemctl enable traefik_container
+
+### View container logs
+
+    systemctl logs traefik_container
+
+This contains historical logs from prior runs as well. If you want to
+just see the current logs, use docker:
+
+    docker logs traefik_container
 
