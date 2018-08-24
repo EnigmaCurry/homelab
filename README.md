@@ -38,7 +38,7 @@ Follow the directions below according to your environment.
    renewal, this API key needs to remain valid and be secured on this
    system.
      
- * Create a new droplet to run docker and traefik:
+ * Create a new droplet to run homelab:
 
    * Choose Fedora Atomic. (Not regular Fedora. It's on the "Container
      Distributions" tab in the UI, currently.)
@@ -48,10 +48,10 @@ Follow the directions below according to your environment.
    * Add your own administrative ssh key to login to the console if
      necessary.
      
-   * Choose whatever hostname you want, front end users won't see this
-     name. In this example, choose 'docker', when fully qualified that
-     would be *docker.app.example.com*. This will be your droplet host
-     to administer.
+   * Choose whatever hostname you want for the server, front end users
+     won't see this name. In this example, choose 'atomic', when fully
+     qualified that would be *atomic.app.example.com*. This is the
+     hostname that you would use to ssh into the droplet.
 
    * Select additional options:
    
@@ -63,8 +63,9 @@ Follow the directions below according to your environment.
 
      * Copy and paste from
        [atomic/atomic-cloud-config.yml](atomic/atomic-cloud-config.yml)
-       into the User Data field. Edit the Environment variables to
-       suit your environment. Paste in the API key you generated above.
+       into the User Data field. Read the setup instructions
+       therein. Edit the Environment variables to suit your
+       environment. Paste in the API key you generated above.
 
    * Click Create! You can watch the log of the kickstart if you open
      the console from the droplet page. The droplet will install

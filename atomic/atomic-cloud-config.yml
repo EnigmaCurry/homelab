@@ -35,7 +35,7 @@ write_files:
       # You must change these to suit your domain name scheme:
       # APP_DOMAIN - The root sub-domain that homelab will manage
       export APP_DOMAIN="app.example.com"
-      # TRAEFIK_HOST (the hostname of this droplet)
+      # TRAEFIK_HOST (the fully qualified domain of this droplet)
       export TRAEFIK_HOST="atomic.app.example.com"
       # ACME_DOMAINS - The domain name(s) to use for the SSL/TLS certificate. 
       export ACME_DOMAINS="*.app.example.com"
