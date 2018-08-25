@@ -2,4 +2,3 @@
   hosts: website
   roles:
      - homelab_spa
-     

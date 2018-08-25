@@ -3,7 +3,7 @@
     <nav class="navbar is-light">
       <div class="navbar-brand">
         <a class="navbar-item" href="/">
-          <h1 class="title"><icon name="door-open" scale="2.5" />Homelab</h1>
+          <h1 class="title"><icon name="server" scale="2.5" />Homelab</h1>
         </a>
         <div class="navbar-burger burger" data-target="navMenuColorlight-example" v-on:click="showNavMenu = !showNavMenu">
           <span></span>
@@ -15,7 +15,7 @@
       <div id="navMenuColorlight-example" class="navbar-menu" v-bind:class="{'is-active': showNavMenu}">
         <div class="navbar-start">
           <div class="navbar-item has-dropdown is-hoverable">
-            <a class="navbar-link" href="/docs">
+            <a class="navbar-link" href="https://github.com/EnigmaCurry/homelab/blob/master/README.md">
               Docs
             </a>
            </div>
@@ -51,7 +51,13 @@ export default {
 
 <style scoped>
 .navbar-brand .title {
-  font-family: 'Source Code Pro'
+  font-family: 'Source Code Pro';
+  font-weight: 300;
+}
+.navbar-brand .title .fa-icon {
+  margin-bottom: -10px;
+  margin-right: 5px;
+  color: #6d6969;
 }
 
 div#content {

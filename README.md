@@ -244,7 +244,7 @@ To run a single playbook:
  to /var/lib/homelab, mounted inside the container. Don't specify an
  absolute path for the argument when using the wrapper.**
 
-## Container maintennce
+## Container maintenance (from the host)
 
 You can check if a container is running using the normal docker functions:
 
@@ -286,3 +286,77 @@ just see the current logs, use docker:
 
     docker logs traefik_container
 
+## Container maintenance part 2 - From the admin container
+
+From a development perspective, it may seem inconvenient to use the
+atomic-playbook wrapper instead of just being able to use ansible-playbook
+directly. Homelab implements an admin container for this reason.
+
+The admin container contains ansible and an ssh client to make changes to the
+host system. It also contains a full
+[Jupyter Lab](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-scipy-notebook)
+notebook server. Jupyter Lab runs as a web app, so you can login to the admin
+container from any web browser. It runs a terminal (in your browser) that has
+SSH keys setup to access the host system, and it has ansible installed locally.
+The homelab code of the host server is mounted inside the admin container at
+/home/jovyan/homelab. jovyan is the default Jupyter Notebook user, and it is the
+user that you should run ansible from. Any changes you make to
+/home/jovyan/homelab, are reflected in the system code at /var/lib/homelab.
+Running ansible from inside the admin container directly modifies the host
+system containers.
+
+### Disabling the admin container
+
+If you don't want to run the admin container, you don't have to. It's not
+required for normal homelab operation. You can remove it from your site.yml.
+Alternatively, you can just turn it on and off as needed. If you want easy
+anytime access from the browser, the admin container needs to be running. But if
+you're not going to use it, you can turn it off:
+
+> systemctl stop admin_container
+
+> systemctl disable admin_container
+
+
+Note: you can still start a 'disabled' systemd service. 'disabled' just means it
+won't automatically start the service on system boot.
+
+### Accessing the admin container Jupyter Lab console
+
+Ensure that the admin playbook is included in your site.yml. Open the admin URL:
+
+> https://admin.app.example.com
+
+Jupyter won't let you log in without a token, or setting a password. You need
+the token to set the password. To get the token, read it from the log file:
+
+> journalctl --unit homelab_admin_container
+
+You'll see a localhost URL ending in `?token=then-a-bunch-of-numbers`. Copy
+those numbers into the 'Password or token' field on the admin container page.
+Now you should be logged in. You can open a terminal, and you will be logged in
+as the jovyan user.
+
+### Running playbooks from JupyterLab
+
+Once you're logged in as jovyan and you have access to the console, you can work
+with ansible directly.
+
+Run all your playbooks:
+
+> ansible-playbook -i /etc/homelab/hosts /home/jovyan/homelab/site.yml
+
+Or just one at a time:
+
+> ansible-playbook -i /etc/homelab/hosts /home/jovyan/homelab/playbooks/website.yml
+
+jovyan can't interact with systemd directly. He can login to the host to do it
+remotely though:
+
+> ssh root@atomic.app.example.com
+
+With the combination of ansible, and direct ssh access, you can do all your
+server maintainence directly from the admin container, running in a terminal in
+your browser. I still recommend you keep a regular SSH console available, so
+that if there is a problem with starting the admin container, you'll be able to
+login remotely and fix it.
