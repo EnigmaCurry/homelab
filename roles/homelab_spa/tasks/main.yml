@@ -1,0 +1,9 @@
+- name: Create homelab_spa systemd service
+  include_role:
+    name: docker-systemd-service
+  vars:
+    container_name: "homelab_spa"
+    container_image: homelab/homelab_spa
+    container_labels:
+      - "traefik.frontend.rule=Host:homelab.{{ app_domain }}"
+    container_docker_pull: false

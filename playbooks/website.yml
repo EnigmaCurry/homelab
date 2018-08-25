@@ -1,0 +1,5 @@
+- name: Website
+  hosts: website
+  roles:
+     - homelab_spa
+     

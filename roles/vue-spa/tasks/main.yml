@@ -1,9 +1,0 @@
-- name: Create vue-spa systemd service
-  include_role:
-    name: docker-systemd-service
-  vars:
-    container_name: "vue-spa"
-    container_image: homelab/vue-spa
-    container_labels:
-      - "traefik.frontend.rule=Host:vue-spa.{{ app_domain }}"
-    container_docker_pull: false

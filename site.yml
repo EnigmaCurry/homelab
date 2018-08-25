@@ -4,10 +4,8 @@
 - name: Admin
   import_playbook: playbooks/admin.yml
 
-- name: atc
-  hosts: traefik
-  roles:
-    - atc
+- name: Website
+  import_playbook: playbooks/website.yml
 
 # - name: Keycloak
 #   import_playbook: playbooks/auth.yml

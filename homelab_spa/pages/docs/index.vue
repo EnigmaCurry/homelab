@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import readme from '../../../README.md'
+import readme from '~/pages/docs/README.md'
 
 export default {
   computed: {

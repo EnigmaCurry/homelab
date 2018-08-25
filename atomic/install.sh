@@ -54,6 +54,8 @@ cat <<EOF > $HOMELAB_CONF/hosts
 $TRAEFIK_HOST ansible_user=root
 [admin]
 $TRAEFIK_HOST ansible_user=root
+[website]
+$TRAEFIK_HOST ansible_user=root
 EOF
 chmod 750 $HOMELAB_CONF/hosts
 
@@ -75,6 +77,10 @@ ln -s $HOMELAB_CONF/group_vars/traefik.yml $HOMELAB_HOME/group_vars/traefik.yml
 ## Build jupyter_ansible image
 cd $HOMELAB_HOME/atomic/jupyter_ansible
 docker build -t homelab/jupyter_ansible .
+
+## Build homelab_spa image
+cd $HOMELAB_HOME/homelab_spa
+docker build -t homelab/homelab_spa .
 
 chmod 771 $HOMELAB_CONF
 chown -R $HOMELAB_USER:$HOMELAB_USER $HOMELAB_CONF
