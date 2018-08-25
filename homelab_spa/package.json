@@ -1,0 +1,31 @@
+{
+  "name": "homelab_spa",
+  "version": "1.0.0",
+  "description": "Hot tub not included",
+  "author": "Ryan McGuire <ryan@enigmacurry.com>",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate",
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
+    "precommit": "npm run lint"
+  },
+  "dependencies": {
+    "bulma": "^0.7.1",
+    "nuxt": "^1.0.0",
+    "vue-awesome": "^3.1.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/markdownit": "^1.2.1",
+    "@nuxtjs/markdownit-loader": "^1.1.1",
+    "babel-eslint": "^8.2.1",
+    "eslint": "^4.15.0",
+    "eslint-friendly-formatter": "^3.0.0",
+    "eslint-loader": "^1.7.1",
+    "eslint-plugin-vue": "^4.0.0",
+    "markdown-it-toc-and-anchor": "^4.1.2",
+    "webpack-node-externals": "^1.7.2"
+  }
+}

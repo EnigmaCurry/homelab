@@ -142,11 +142,11 @@ above, and how my configuration works, you can easily adapt this for a
 totally private, home LAN type setup.
 
  - You still need a real internet domain name.
- - You still need a digital ocean account, but you won't deploy any
-   droplets. You need to manage your DNS for Let's Encrypt challenge
-   response. Digital Ocean is used here only to update the DNS
-   records. If you have another way of doing that, then you don't need
-   Digital Ocean.
+ - You still need a digital ocean account, but you won't deploy any droplets.
+   You need to manage your DNS for Let's Encrypt challenge response. Digital
+   Ocean is used here only to update the DNS records. If you have
+   [another way of doing that](https://docs.traefik.io/configuration/acme/#provider),
+   then you don't need Digital Ocean.
  - You may be wondering.. Yes, you _can_ use Let's Encrypt
    certificates for private LANs! Now you can protect your internal ip
    ranges with TLS. When you view your gateway router admin page,
