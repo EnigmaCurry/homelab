@@ -360,3 +360,47 @@ server maintainence directly from the admin container, running in a terminal in
 your browser. I still recommend you keep a regular SSH console available, so
 that if there is a problem with starting the admin container, you'll be able to
 login remotely and fix it.
+
+## Development
+
+[homelab_spa](homelab_spa) is a VueJS app written to interact with
+microservices deployed via homelab. homelab.app.example.com is a
+production build. To update the production app, you rebuild the docker
+image.
+
+If you want to run it as a dev server, you do not need to rebuild the
+image. You can run the dev server directly from the console (or in a
+long running session manager, screen, or tmux).
+
+Set an appropriate DEVHOST environment variable, which is the domain
+name you wish to run the development server at, then source the
+devserver script:
+
+> DEVHOST=homelab-dev.app.example.com source /var/lib/homelab/homelab_spa/bin/devserver
+
+This will print the hostname, username, and a randomly generated
+password, needed to access the dev server. Copy this to your notes, as
+this is the only time it will be displayed.
+
+This sets up two bash aliases in your current terminal session:
+
+> devinstall
+
+devinstall runs 'npm install' and creates /var/lib/homelab/homelab_spa/node_modules
+
+> devserver
+
+devserver will start the development server.
+
+Keep the current terminal open, in order to view the logs. Press
+Ctrl-C to stop the development server.
+
+Since anyone on the internet/LAN can access the development server, it
+is protected by HTTP Basic Authentication. In order to access the
+site, you will need to enter the username and password that was
+printed above.
+
+Files that you modify in /var/lib/homelab/homelab_spa will be
+hot-reloaded inside the dev server, just like if you were running 'npm
+run dev' on your laptop. You can scp files there, use emacs TRAMP, or
+just use an editor directly on the host.
