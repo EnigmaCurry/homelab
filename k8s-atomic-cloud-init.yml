@@ -43,10 +43,15 @@ write_files:
                  -e CONFIG_FILE=inventory/kubelab/hosts.ini \
                  kubelab \
                  python3 contrib/inventory_builder/inventory.py ${IPS[@]}
-      docker run --rm -t -v /var/lib/kubelab:/kubespray \
+
+      # Run ansible - two times to avoid race conditions?
+      for run in {1..2}
+      do
+          docker run --rm -t -v /var/lib/kubelab:/kubespray \
                  -v /root/.ssh:/root/.ssh \
                  kubelab \
                  ansible-playbook -i inventory/kubelab/hosts.ini cluster.yml
+      done
                  
       # Self Destruct!
       echo "Post Installation tasks Complete."
