@@ -1,406 +1,85 @@
-# Homelab
+# homelab
 
-Homelab is an Ansible playbook for a self-hosted network laboratory
-with automatic SSL support, provided by
-[traefik](https://docs.traefik.io/) and [Let's
-Encrypt](https://letsencrypt.org/). Applications are deployed as
-docker containers wrapped as systemd services, provided by
-[mhutter/ansible-docker-systemd-service](https://github.com/mhutter/ansible-docker-systemd-service).
+homelab is an Ansbile-powered management environment for your docker
+swarm (mainly on Digital Ocean but this is adaptable), and provides a
+consistently reproducible administrative console for the swarm, its
+deployment, its configuration, and storing (and distributing) secrets.
+It is designed to be disposable, and easily recreated anywhere by git
+clone. This way you only run the admin console when *you* need it, and
+is not as easily hacked as a service running all the time. Secrets are
+encrypted by ansible-vault, and can be pushed to your private git
+server to backup your configuration.
 
-Homelab is equally suited for firewalled home laboratories, or in the
-cloud for public services. It all depends on where you call home.
-Follow the directions below according to your environment.
+homelab can be installed on any machine with Python3:
 
-## Installation
+```
+python3 -m venv homelab-env
+cd homelab-envB
+source bin/activate
+pip install homelab
+homelab init
+# -or-
+homelab clone git@private-git-url:homelab_example
+```
 
-### Digital Ocean public cloud deployment
-
- * Login to your Digital Ocean account, on the Networking tab, add a
-   domain name to your account (refered to as *example.com* from here
-   on.)
-
- * Configure your domain registrar to use Digital Ocean DNS
-   nameservers (Required for Let's Encrypt DNS challenge):
-
-   * ns1.digitalocean.com
-   * ns2.digitalocean.com
-   * ns3.digitalocean.com
-
- * Choose a sub-domain name that homelab will manage. Something like
-   *app.example.com*. Homelab will later create by itself
-   sub-sub-domains off of this, eg. *blog.app.example.com*,
-   *chat.app.example.com*. (Homelab is essentially a collection of
-   ansible roles, where each role deploys an app or service with
-   a unique FQDN.)
-
- * Generate a Digital Ocean API key (API tab). Name it the same as the
-   hostname of the droplet you'll create. You'll need to provide the
-   key for the next section. This will be used for the Let's Encrypt
-   DNS challenge response. If you want automatic TLS certificate
-   renewal, this API key needs to remain valid and be secured on this
-   system.
-     
- * Create a new droplet to run homelab:
-
-   * Choose Fedora Atomic. (Not regular Fedora. It's on the "Container
-     Distributions" tab in the UI, currently.)
+`homelab init` creates a new homelab instance, by doing the following:
+ - Initializes a new git repository
+ - Creates example ansible playbook templates in this directory
+ - Creates a unique tag name for this instance of homelab, to help
+   identify resources it will create.
+ - Creates a new encrypted ansible vault for storing secrets
+ - Prints out a secure encryption password to the screen, instructing
+   the user to save the password to their password manager.
+ - Creates a password file. The filename is put in .gitignore
+ - Optionally encrypts the password file with a gpg identity, which
+   can then be added to the git repo.
    
-   * Choose droplet size ($5/1GB works fine for testing)
-   
-   * Add your own administrative ssh key to login to the console if
-     necessary.
-     
-   * Choose whatever hostname you want for the server, front end users
-     won't see this name. In this example, choose 'atomic', when fully
-     qualified that would be *atomic.app.example.com*. This is the
-     hostname that you would use to ssh into the droplet.
-
-   * Select additional options:
-   
-     * Choose Private Networking (not strictly necessary, but if you
-       plan to have more than one droplet, you'll want this later.)
-
-     * Choose User Data. This will provide a kickstart to operating
-       system setup for our droplet.
-
-     * Copy and paste from
-       [atomic/atomic-cloud-config.yml](atomic/atomic-cloud-config.yml)
-       into the User Data field. Read the setup instructions
-       therein. Edit the Environment variables to suit your
-       environment. Paste in the API key you generated above.
-
-   * Click Create! You can watch the log of the kickstart if you open
-     the console from the droplet page. The droplet will install
-     dependencies and then reboot once.
-     
- * Create a Floating IP address (Networking tab), assign it to the new
-   droplet just created.
-
- * Create DNS records (Networking tab) for the Floating IP. You need
-   two type A records, both pointing to the Floating IP:
-
-   * app.example.com
-   * *.app.example.com
-
- * The droplet will reboot once, then you should now be able to SSH
-   into the root terminal of app.example.com.
-
-       ssh root@app.example.com
-
- * Post installation tasks are run the first time the machine reboots,
-   check the log:
+`homelab clone` checks out an existing homelab configuration, by doing the following:
+ - git clone from your private git server
+ - Reads configuration, and finds the homelab_id, and other sanity check
+ - Decrypts gpg encrypted passphrase to hidden password file included
+   in .gitignore
  
-       journalctl -f --unit post-install
+Either way, setting up a fully configured homelab environment is done
+with just a few commands.
+ 
+## Creating an initial configuration
 
-   Wait for the message "Post Installation tasks Complete"
+group_vars/homelab.yml is your main homelab configuration file. It is
+encrypted with ansible-vault, and you need a passphrase to view or
+edit it. (Since homelab created a password file for you, you won't need
+to enter the passphrase). Use this command to edit the file:
 
-   Look for lines similar to:
+```
+ansible-vault edit group_vars/homelab.yml
+```
 
-       post-install.sh[736]: PLAY RECAP *********************************************************************
-       post-install.sh[736]: atomic.app2.rymcg.tech     : ok=14   changed=10   unreachable=0    failed=0
-       post-install.sh[736]: Post Installation tasks Complete.
-       post-install.sh[736]: Removed /etc/systemd/system/multi-user.target.wants/post-install.service.
-       systemd[1]: Started post-install.service.
+[Here are the full ansible-vault
+docs](https://docs.ansible.com/ansible/2.4/vault.html#ansible-vault)
 
- * Examine the logs of the traefik container and ensure that the Let's
-   Encrypt DNS Challenge completed successfully, or not:
+homelab.yml will already contain the homelab instance id:
 
-       journalctl --unit traefik_container
+    ---
+    homelab_id: homelab_xxxxxxxxxxxx
+    
+For a digital ocean deployment, you need to enter your API KEY:
 
-   Look for lines similar to:
+    ---
+    homelab_id: homelab_xxxxxxxxxxxx
+    digital_ocean_api_key: your-generated-digital-ocean-auth-token
 
-       level=debug msg="Building ACME client..."
-       level=debug msg="https://acme-v02.api.letsencrypt.org/directory"
-       level=info msg=Register...
-       level=debug msg="legolog: [INFO] acme: Registering account for letsencrypt@example.com"
-       level=debug msg="Using DNS Challenge provider: digitalocean"
-       level=debug msg="legolog: [INFO][*.app.example.com] acme: Obtaining bundled SAN certificate"
-       level=debug msg="legolog: [INFO][*.app.example.com] AuthURL: https://acme-v02.api.letsencrypt.org/....>
-       level=debug msg="legolog: [INFO][app.example.com] acme: Trying to solve DNS-01"
-       level=debug msg="legolog: [INFO][app.example.com] Checking DNS record propagation
-       level=debug msg="legolog: [INFO][app.example.com] The server validated our request"
-       level=debug msg="legolog: [INFO][*.app.example.com] acme: Validations succeeded; requesting certificates"
-       level=debug msg="legolog: [INFO][*.app.example.com] Server responded with a certificate."
+Put all your secrets in this file, encrypted, and push it to your
+homelab repository.
 
- * Check the demo app is running, and that SSL is working properly. In
-   your browser to go to https://atc.app.example.com
+## Creating droplets
 
-### Private home lab installation
+https://gitlab.com/snoopdouglas/dobro
 
-Homelab actually started as something that you would use in your own
-dwelling, the home you live at. I wanted to have the same kind of
-automation I get for cloud services, inside my home on my own private
-network.
+https://gitlab.com/snoopdouglas/ansible-inventory-doctl-tags
 
-Before long, my focus shifted to other things, and I shelved
-homelab. I've come back to it now, but I've been focussing on digital
-ocean and cloud deployment stuff recently. So homelab is not in a
-ready state to be deployed at an actual home right now.
+## Creating a docker swarm
 
-But here's the gist, and if you understand the digital ocean workflow
-above, and how my configuration works, you can easily adapt this for a
-totally private, home LAN type setup.
+https://thisendout.com/2016/09/13/deploying-docker-swarm-with-ansible/
 
- - You still need a real internet domain name.
- - You still need a digital ocean account, but you won't deploy any droplets.
-   You need to manage your DNS for Let's Encrypt challenge response. Digital
-   Ocean is used here only to update the DNS records. If you have
-   [another way of doing that](https://docs.traefik.io/configuration/acme/#provider),
-   then you don't need Digital Ocean.
- - You may be wondering.. Yes, you _can_ use Let's Encrypt
-   certificates for private LANs! Now you can protect your internal ip
-   ranges with TLS. When you view your gateway router admin page,
-   you get a valid SSL certificate acceptable in all browsers.
- - You will use the APP_DOMAIN as your own private LAN subnet,
-   eg. app.lan.example.com. I choose app.lan because I want a whole
-   subdomain for homelab, just as above. _This does not include LAN
-   clients_. Clients need to be on their own subnet. For example,
-   laptop1.lan.example.com is your laptop, atomic.app.lan.example.com
-   is homelab, which serves *.app.lan.example.com.
- - You will create a docker server, and then install homelab on it,
-   configuring it with the hostname atomic.app.lan.example.com. I
-   haven't done this step yet, since I switched the install to Fedora
-   Atomic. Maybe it just works somehow with Fedora Atomic Workstation,
-   but I just haven't tried it yet.
- - Anyway, I'll probably want to administer debian instrastructure at
-   home, (Fedora Atomic is still strange to me), so that means that
-   the same installation steps that atomic runs from
-   [atomic/atomic-cloud-config.yml](atomic/atomic-cloud-config.yml)
-   and [atomic/install.sh](atomic/install.sh) need to be translated
-   into apt-get and debianisms. You can probably just grok the
-   commands and configure it by hand. Eventually I'll write a script.
- - You need to add your domain to Digital Ocean and set it up for DNS,
-   but you don't need to create any records, as you will rely on your
-   own private DNS server (hosted by homelab) for that.
- - You need to generate an API token for Digital Ocean, the same as
-   above, and make sure it's being sent to the environment of the
-   traefik container (/etc/homelab/traefik/environment), so that it
-   can use it to update DNS when Let's Encrypt ask for it to update the
-   challenge response every 3-10 months.
- - Note that the docker server running traefik needs an internet
-   connection to talk to Let's Encrypt to keep the TLS certificate
-   active. However, intermittent connection is OK. You just need to be
-   online every 3 months to update the certificate.
- - You could even deploy homelab to the cloud such to guarantee that
-   it had constant uptime and internet connection, but then just grab
-   the certificate and copy to another homelab instance running on the
-   LAN that doesn't necessarily have internet access at all. Then you
-   have no worries that your certificate will expire, and need no
-   internet access for your LAN.
- - If you're not well versed in TLS/SSL mechanics, you may be
-   wondering how this works. I _don't_ know how it works, but I _do_
-   understand it: Your OS/browser has a list of valid Certificate
-   Authorities (CA), one of which is Let's Encrypt. It understands how
-   to validate certificates, it does this all on its own,
-   cryptographically. It can validate certificates offline. It needs
-   nothing more than the list of CAs, and to check if the signature of
-   the certificate is from a valid CA.
- - Ensure your site.yml includes the dnsmasq role, this will provide a
-   DNS server for your private lan. (You configure your DHCP server to
-   send the DNS server ip address of your docker host to your clients.)
- - The dnsmasq DNS server resolves everything at *.app.lan.example.com to
-   the trafeik container, which proxies for all the other individual
-   containers you run, each getting their own subdomain, eg
-   service1.app.lan.example.com.
- - Everything going through traefik this way gains SSL support, even
-   running on your private LAN!
+https://github.com/nextrevision/ansible-swarm-playbook
 
-## Administration
-
-To recap, homelab does the following:
-
- - System services are deployed as docker containers. Each container
-   is described in an individual Ansible playbook found in
-   /var/lib/homelab/playbooks. The main playbook is in
-   /var/lib/homelab/site.yml.
-
- - Container config files are in /etc/homelab
-
- - Each docker container is wrapped as a systemd service. The name of
-   each systemd service uses the docker container name, and appends
-   '_container' to the end. For instance, the traefik docker container
-   is called 'traefik', therefore the systemd container name is
-   'traefik_container'.
-
- - Ansible is not installed on the host system. Ansible is run from a
-   docker container that has ssh keys to the host system. The host has
-   access to a wrapper script that will invoke ansible from this
-   container: /var/lib/homelab/atomic/atomic-playbook.sh
-
-## Running a playbook
-
-Once the system is running, ansible can be re-run to deploy any
-changes you've made to containers or homelab code.
-
-To run all the playbooks:
-
-    /var/lib/homelab/atomic/atomic-playbook.sh site.yml
-
-To run a single playbook:
-
-    /var/lib/homelab/atomic/atomic-playbook.sh playbooks/traefik.yml
-
-**Note: The playbook argument to atomic-playbook is a _relative_ path
- to /var/lib/homelab, mounted inside the container. Don't specify an
- absolute path for the argument when using the wrapper.**
-
-## Container maintenance (from the host)
-
-You can check if a container is running using the normal docker functions:
-
-    docker ps -a
-
-However, don't start or stop containers manually, instead use
-systemd. If you try to stop a container with just docker commands, the
-container will be restarted automatically by systemd.
-
-### Stop a container service
-
-    systemctl stop traefik_container
-
-Note: The systemd container is named 'traefik_container', the docker
-container is just called 'traefik'
-
-### Start a container service
-
-    systemctl start traefik_container
-
-### View container status
-
-    systemctl status traefik_container
-
-### Prevent a container from starting on boot:
-
-    systemctl disable traefik_container
-
-### Enable a container to start on boot:
-
-    systemctl enable traefik_container
-
-### View container logs
-
-    systemctl logs traefik_container
-
-This contains historical logs from prior runs as well. If you want to
-just see the current logs, use docker:
-
-    docker logs traefik_container
-
-## Container maintenance part 2 - From the admin container
-
-From a development perspective, it may seem inconvenient to use the
-atomic-playbook wrapper instead of just being able to use ansible-playbook
-directly. Homelab implements an admin container for this reason.
-
-The admin container contains ansible and an ssh client to make changes to the
-host system. It also contains a full
-[Jupyter Lab](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-scipy-notebook)
-notebook server. Jupyter Lab runs as a web app, so you can login to the admin
-container from any web browser. It runs a terminal (in your browser) that has
-SSH keys setup to access the host system, and it has ansible installed locally.
-The homelab code of the host server is mounted inside the admin container at
-/home/jovyan/homelab. jovyan is the default Jupyter Notebook user, and it is the
-user that you should run ansible from. Any changes you make to
-/home/jovyan/homelab, are reflected in the system code at /var/lib/homelab.
-Running ansible from inside the admin container directly modifies the host
-system containers.
-
-### Disabling the admin container
-
-If you don't want to run the admin container, you don't have to. It's not
-required for normal homelab operation. You can remove it from your site.yml.
-Alternatively, you can just turn it on and off as needed. If you want easy
-anytime access from the browser, the admin container needs to be running. But if
-you're not going to use it, you can turn it off:
-
-> systemctl stop admin_container
-
-> systemctl disable admin_container
-
-
-Note: you can still start a 'disabled' systemd service. 'disabled' just means it
-won't automatically start the service on system boot.
-
-### Accessing the admin container Jupyter Lab console
-
-Ensure that the admin playbook is included in your site.yml. Open the admin URL:
-
-> https://admin.app.example.com
-
-Jupyter won't let you log in without a token, or setting a password. You need
-the token to set the password. To get the token, read it from the log file:
-
-> journalctl --unit homelab_admin_container
-
-You'll see a localhost URL ending in `?token=then-a-bunch-of-numbers`. Copy
-those numbers into the 'Password or token' field on the admin container page.
-Now you should be logged in. You can open a terminal, and you will be logged in
-as the jovyan user.
-
-### Running playbooks from JupyterLab
-
-Once you're logged in as jovyan and you have access to the console, you can work
-with ansible directly.
-
-Run all your playbooks:
-
-> ansible-playbook -i /etc/homelab/hosts /home/jovyan/homelab/site.yml
-
-Or just one at a time:
-
-> ansible-playbook -i /etc/homelab/hosts /home/jovyan/homelab/playbooks/website.yml
-
-jovyan can't interact with systemd directly. He can login to the host to do it
-remotely though:
-
-> ssh root@atomic.app.example.com
-
-With the combination of ansible, and direct ssh access, you can do all your
-server maintainence directly from the admin container, running in a terminal in
-your browser. I still recommend you keep a regular SSH console available, so
-that if there is a problem with starting the admin container, you'll be able to
-login remotely and fix it.
-
-## Development
-
-[homelab_spa](homelab_spa) is a VueJS app written to interact with
-microservices deployed via homelab. homelab.app.example.com is a
-production build. To update the production app, you rebuild the docker
-image.
-
-If you want to run it as a dev server, you do not need to rebuild the
-image. You can run the dev server directly from the console (or in a
-long running session manager, screen, or tmux).
-
-Set an appropriate DEVHOST environment variable, which is the domain
-name you wish to run the development server at, then source the
-devserver script:
-
-> DEVHOST=homelab-dev.app.example.com source /var/lib/homelab/homelab_spa/bin/devserver
-
-This will print the hostname, username, and a randomly generated
-password, needed to access the dev server. Copy this to your notes, as
-this is the only time it will be displayed.
-
-This sets up two bash aliases in your current terminal session:
-
-> devinstall
-
-devinstall runs 'npm install' and creates /var/lib/homelab/homelab_spa/node_modules
-
-> devserver
-
-devserver will start the development server.
-
-Keep the current terminal open, in order to view the logs. Press
-Ctrl-C to stop the development server.
-
-Since anyone on the internet/LAN can access the development server, it
-is protected by HTTP Basic Authentication. In order to access the
-site, you will need to enter the username and password that was
-printed above.
-
-Files that you modify in /var/lib/homelab/homelab_spa will be
-hot-reloaded inside the dev server, just like if you were running 'npm
-run dev' on your laptop. You can scp files there, use emacs TRAMP, or
-just use an editor directly on the host.
