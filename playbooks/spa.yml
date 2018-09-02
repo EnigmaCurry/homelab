@@ -1,6 +1,0 @@
-- name: Vue.js Single Page App
-  hosts: traefik
-  roles:
-    - vue-spa
-    
-    

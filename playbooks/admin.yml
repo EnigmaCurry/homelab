@@ -1,5 +1,0 @@
-- name: System Admin Containers
-  hosts: admin
-  roles:
-     - admin
-     

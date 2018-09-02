@@ -1,9 +1,0 @@
-- name: Create atc systemd container service
-  include_role:
-    name: docker-systemd-service
-  vars:
-    container_name: atc
-    container_image: enigmacurry/atc:latest
-    container_labels:
-      - "traefik.backend=website"
-      - "traefik.frontend.rule=Host:atc.{{ app_domain }}"

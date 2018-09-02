@@ -1,4 +1,0 @@
-- name: Traefik container
-  hosts: traefik
-  roles:
-    - traefik
