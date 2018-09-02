@@ -1,0 +1,88 @@
+#cloud-config
+
+## Fedora Atomic kickstart for Ansible Kubernetes deployment
+##
+## Install is in two phases:
+## - Upgrades docker to latest community edition
+## - Installs git
+## - Configures a systemd task to run only on the first reboot
+## Then it reboots (the Atomic way!)
+## - On first reboot, /usr/local/bin/post-install.sh is run.
+##   - This enables the new docker service
+##   - git clones homelab code and runs the config script
+##   - post-install.sh deletes itself, so that it's not run again.
+## - Follow the post-install log progress (or for errors, oops):
+##   - journalctl -f --unit post-install
+##   - Wait for the "Post Installation tasks Complete." message.
+## - If things go really wrong, check the cloud-init log:
+##   - less /var/log/cloud-init-output.log
+
+write_files:
+  - path: "/usr/local/bin/post-install.sh"
+    permissions: "0750"
+    content: |
+      #!/bin/bash
+      # Post-Install tasks to do only on the first reboot
+      # This script will self destruct in 3,2,...
+
+      # Enable the newly installed docker service:
+      systemctl enable --now docker
+      sleep 2
+
+      # Setup ssh key for ansible
+      ssh-keygen -N '' -f /root/.ssh/id_rsa
+      cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+      
+      # Setup ansible + kubelab
+      git clone https://github.com/EnigmaCurry/kubelab.git /var/lib/kubelab
+      cd /var/lib/kubelab
+      docker build -t kubelab .
+      declare -a IPS=(`curl http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address`)
+      cp -a inventory/sample inventory/kubelab
+      docker run --rm -t -v /var/lib/kubelab/inventory:/kubespray/inventory \
+                 -e CONFIG_FILE=inventory/kubelab/hosts.ini \
+                 kubelab \
+                 python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+      docker run --rm -t -v /var/lib/kubelab:/kubespray \
+                 -v /root/.ssh:/root/.ssh \
+                 kubelab \
+                 ansible-playbook -i inventory/kubelab/hosts.ini cluster.yml
+                 
+      # Self Destruct!
+      echo "Post Installation tasks Complete."
+      systemctl disable post-install
+      rm /etc/systemd/system/post-install.service
+      shred -u /usr/local/bin/post-install.sh
+
+  - path: "/etc/docker/daemon.json"
+    content: |
+      {
+        "storage-driver": "overlay2"
+      }
+      
+  - path: "/etc/systemd/system/post-install.service"
+    content: |
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/post-install.sh
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: "/etc/yum.repos.d/docker.repo"
+    content: |
+      [docker-ce-stable]
+      name=Docker CE Stable - $basearch
+      baseurl=https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://download.docker.com/linux/fedora/gpg
+      
+runcmd:
+  - ln -s /etc/systemd/system/post-install.service /etc/systemd/system/multi-user.target.wants/post-install.service
+  # Upgrade Docker
+  - rpm-ostree override remove docker docker-common cockpit-docker
+  # Install initial dependencies:
+  - atomic host install git docker-ce
+  # Reboot using the new os-tree:
+  - systemctl reboot
+  # post-install systemd service now finalizes setup on the first reboot. 
